@@ -14,9 +14,11 @@ def readtable():
 
     img_base64 = request.json.get('imgdata')
     img_data = base64.b64decode(img_base64)
+    img_name = request.json.get('imgname')
+    print(img_name)
     image_folder = 'images'
     os.makedirs(image_folder, exist_ok=True)
-    image_filename = os.path.join(image_folder, 'uploaded_image.png')
+    image_filename = os.path.join(image_folder, img_name)
     with open(image_filename, 'wb') as image_file:
             image_file.write(img_data)
 
