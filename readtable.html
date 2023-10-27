@@ -1,0 +1,285 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* * {
+            padding: 0px;
+            margin: 0px;
+        } */
+        #popwindow {
+            position: fixed;
+            left:10%;
+            top: 15%;
+            height: 600px;
+            width: 1000px;
+            background-color: white;
+            box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+            border: 1px solid #ccc;
+            overflow: hidden;
+        }
+        #header {
+            width: 100%;
+            height: 40px;
+            background-color: #eee;
+        }
+        #content {
+            width:100%;
+            height: 560px;
+            overflow: auto;
+        }
+
+        #output_table {
+            border: 1px solid #ccc;
+            margin: 10px 10%;
+            text-align: center;
+            border-collapse: collapse;
+        }
+      
+        #output_table td{
+            width: 150px;
+            border: 1px solid #ccc;
+        }
+        
+    </style>
+</head>
+<body>
+    <div  id= "popwindow" style="display:none"> 
+        <div id="header">
+        <div onclick = "showhidePopWindow();" style="float:right;margin:10px;cursor: pointer;">X</div>
+        </div>
+        <div id="content">
+        <table id = "output_table">
+          
+           
+            <tr>
+                <td>4</td>
+                <td>5</td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>5</td>
+                <td>5</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>5</td>
+                <td>5</td>
+            </tr>
+
+        </table>
+         </div>
+    </div>
+
+    <input type="file" name="" id="" onchange="selectImage(this);">
+    <input type="radio" name="content_type" id="" value="chi_sim" checked>中英文
+    <input type="radio" name="content_type" id="" value="digit">数字
+    
+    <br>
+    列数：<input type="text" name="" id="ncol" value = "3">
+    列宽：<input type="text" name="" id="col_width" value="48">
+    列间矩：<input type="text" name="" id="col_margin" value="80">
+    离左边：<input type="text" name="" id="col_left" value="10">
+    <br>
+    行数：<input type="text" name="" id="nrow" value="3">
+    行高：<input type="text" name="" id="row_height" value="48">
+    行间矩：<input type="text" name="" id="row_margin" value="0">
+    离顶部：<input type="text" name="" id="row_top" value="10">
+
+    <br>
+    <input type="button" value="绘框" onclick="drawRect();">
+    <input type="button" value="OCR" onclick="getTableText();">
+    <button value="显示隐藏" onclick ="showhidePopWindow();" >显示隐藏</button>
+ 
+
+    <br>
+
+
+
+    <img id = "imgfile" src="" alt="">
+    <canvas id = 'canvas' width="1400px" height="800px"></canvas>
+
+    <script>
+        let mywindow = document.getElementById('popwindow');
+        let mywindowheader = document.getElementById('header');
+        mywindowheader.addEventListener('mousedown',startDragging);
+        let offsetX, offsetY;
+
+        function startDragging(e){
+            offsetX = e.clientX - mywindow.offsetLeft;
+            offsetY = e.clientY - mywindow.offsetTop;
+            document.addEventListener('mousemove',drag);
+            document.addEventListener('mouseup',stopDragging);
+        }
+        function drag(e){
+            mywindow.style.left = e.clientX - offsetX + 'px';
+            mywindow.style.top = e.clientY- offsetY + 'px';
+        }
+        function stopDragging(){
+            document.removeEventListener('mousemove',drag);
+            document.removeEventListener('mouseup',stopDragging);
+        }
+
+
+
+
+        function showhidePopWindow(){
+            let w = document.getElementById("popwindow");
+            if (w.style.display == "none"){
+                w.style.display = "block";
+            }else{
+                w.style.display="none";
+            }
+        }
+
+
+        var myImage = new Image();
+        var myImageData = "";
+
+        function selectImage(file){
+            if(!file.files || ! file.files[0]){
+                return
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(evt){
+                myImageData = reader.result;
+                //console.log(myImageData);
+                myImageData = myImageData.replace(/^data:image\/(png|jpg);base64,/, "");
+                myImage.src = evt.target.result;
+                myImage.onload = function(evt){
+                    let canvas = document.getElementById('canvas');
+                    let ctx = canvas.getContext("2d");
+                    canvas.width = myImage.width;
+                    canvas.height = myImage.height;
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    ctx.drawImage(myImage,0,0);
+                }
+
+            }
+            reader.readAsDataURL(file.files[0]);
+
+        }
+        
+        function drawRect(){
+            nrow = parseInt(document.getElementById('nrow').value);
+            row_height = parseInt(document.getElementById('row_height').value);
+            row_margin = parseInt(document.getElementById('row_margin').value);
+            row_top = parseInt(document.getElementById('row_top').value);
+
+            ncol = parseInt(document.getElementById('ncol').value);
+            col_width = parseInt(document.getElementById('col_width').value);
+            col_margin = parseInt(document.getElementById('col_margin').value);
+            col_left = parseInt(document.getElementById('col_left').value);
+
+
+            //console.log({nrow,row_height,row_margin,ncol,col_width,col_margin});
+
+
+            let canvas = document.getElementById('canvas');
+            let ctx = canvas.getContext("2d");
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1;
+            //ctx.strokeRect(10,10,50,50);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.drawImage(myImage,0,0);
+            for (let i = 0; i <nrow; i++ ){
+                for(let j = 0; j <ncol; j++){
+                    ctx.strokeRect(col_left + j * (col_width + col_margin),
+                                    row_top + i * (row_height + row_margin),
+                                    col_width, row_height
+
+                    );
+               }
+            }           
+        }
+
+
+        function getTableText(){
+            if (myImageData ==""){
+                window.alert("请先选择图片文件");
+                return;
+            }
+
+            nrow = parseInt(document.getElementById('nrow').value);
+            row_height = parseInt(document.getElementById('row_height').value);
+            row_margin = parseInt(document.getElementById('row_margin').value);
+            row_top = parseInt(document.getElementById('row_top').value);
+
+            ncol = parseInt(document.getElementById('ncol').value);
+            col_width = parseInt(document.getElementById('col_width').value);
+            col_margin = parseInt(document.getElementById('col_margin').value);
+            col_left = parseInt(document.getElementById('col_left').value);
+
+            let x_content_type = document.getElementsByName('content_type');
+            let lang = '';
+            for (let i =0; i <x_content_type.length; i++ ){            
+                if (x_content_type[i].checked){
+                    lang = x_content_type[i].value;
+                    break;
+                }
+            }
+
+            param = {
+                "x":col_left, "y":row_top,
+                "width":col_width,"height":row_height,
+                "nrow":nrow,"margin_row":row_margin,
+                "ncol":ncol,"margin_col":col_margin
+            };
+            
+            console.log(lang);
+            fetch('http://localhost:5000/api/readtable',{
+                method:'POST',
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"param":param,"imgdata":myImageData,"lang":lang})
+            })
+            .then(response => response.json())
+            .then(result =>{
+                //console.log(result);
+                showOcrContent(result);
+
+            })
+            .catch(error=>{
+                console.error(error);
+            });
+        }
+
+    function showOcrContent(content){
+        let ncol = parseInt(content['ncol']);
+        let nrow = parseInt(content['nrow']);
+        let result = content['result'];
+        console.log(result);
+        let html= "";
+        for(let i = 0 ;i<nrow; i++){
+            html += "<tr>"
+            for(let j=0;j<ncol; j++){
+                html += "<td>" + result[j + i*ncol] +"</td>"
+            }
+            html += "</tr>"
+        }
+        console.log(html);
+        showResultWindow(html);
+
+
+    }
+    function showResultWindow(html){
+        let w = document.getElementById('popwindow');
+        let tb = document.getElementById('output_table');
+        tb.innerHTML = html;
+        w.style.display='block';
+
+    }
+
+
+
+    </script>
+
+    
+</body>
+</html>
