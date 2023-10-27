@@ -34,7 +34,7 @@
 
         #output_table {
             border: 1px solid #ccc;
-            margin: 0 auto;
+            margin: 10px auto;
             width: 90%;
             text-align: center;
             border-collapse: collapse;
@@ -81,20 +81,20 @@
     <input type="radio" name="content_type" id="" value="digit">数字
     
     <br>
-    列数：<input type="text" name="" id="ncol" value = "3">
-    列宽：<input type="text" name="" id="col_width" value="48">
-    列间矩：<input type="text" name="" id="col_margin" value="80">
-    离左边：<input type="text" name="" id="col_left" value="10">
+    列数：<input type="number" name="" id="ncol" value = "3" onchange="drawRect();">
+    列宽：<input type="number" name="" id="col_width" value="48" onchange="drawRect();">
+    列间矩：<input type="number" name="" id="col_margin" value="80" onchange="drawRect();">
+    离左边：<input type="number" name="" id="col_left" value="10" onchange="drawRect();">
     <br>
-    行数：<input type="text" name="" id="nrow" value="3">
-    行高：<input type="text" name="" id="row_height" value="48">
-    行间矩：<input type="text" name="" id="row_margin" value="0">
-    离顶部：<input type="text" name="" id="row_top" value="10">
+    行数：<input type="number" name="" id="nrow" value="3" onchange="drawRect();">
+    行高：<input type="number" name="" id="row_height" value="48" onchange="drawRect();">
+    行间矩：<input type="number" name="" id="row_margin" value="0" onchange="drawRect();">
+    离顶部：<input type="number" name="" id="row_top" value="10" onchange="drawRect();">
 
     <br>
-    <input type="button" value="绘框" onclick="drawRect();">
+    <input type="button" value="绘框" onclick="drawRect();" style="display:none">
     <input type="button" value="OCR" onclick="getTableText();">
-    <button value="显示隐藏" onclick ="showhidePopWindow();" >显示隐藏</button>
+    <button value="显示隐藏" onclick ="showhidePopWindow();" >显/隐结果</button>
  
 
     <br>
