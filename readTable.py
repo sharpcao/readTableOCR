@@ -48,7 +48,7 @@ def readText(img_src, rect_list, config = '--psm 6 -l chi_sim'):
     out = []
     for rect in rect_list:
         o = tes.image_to_string(img.crop(rect),config=config).strip()
-        out.append(o)
+        out.append(o.replace(' ',''))
     
     return out
 
