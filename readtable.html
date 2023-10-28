@@ -44,7 +44,12 @@
             width: 150px;
             border: 1px solid #ccc;
         }
-        
+        #row_list{
+            width: 800px;
+        }
+        #col_list{
+            width: 800px;
+        }
     </style>
 </head>
 <body>
@@ -77,23 +82,56 @@
     </div>
 
     <input type="file" name="" id="" onchange="selectImage(this);">
+    <select name="" id="selPanel" onchange="changePanel();">
+        <option value="0">规则表格</option>
+        <option value="1">不规则表格</option>
+    </select>
+    <script>
+        function changePanel(){
+            let panel0 = document.getElementById('panel0');
+            let panel1 = document.getElementById('panel1');
+
+            let opt = document.getElementById('selPanel');
+            ocrType = opt.options[opt.selectedIndex].value;
+            if (ocrType == 1){
+                panel0.style.display="none";
+                panel1.style.display="block";
+                
+            }else{
+                panel0.style.display="block";
+                panel1.style.display="none";
+            }
+
+        }
+    </script>
+
     <input type="radio" name="content_type" id="" value="chi_sim" checked>中英文
     <input type="radio" name="content_type" id="" value="digit">数字
+  
     
     <br>
-    列数：<input type="number" name="" id="ncol" value = "3" onchange="drawRect();">
-    列宽：<input type="number" name="" id="col_width" value="48" onchange="drawRect();">
-    列间矩：<input type="number" name="" id="col_margin" value="80" onchange="drawRect();">
-    离左边：<input type="number" name="" id="col_left" value="10" onchange="drawRect();">
+    <div id="panel0">
+        列数：<input type="number" name="" id="ncol" value = "3" onchange="drawRect();">
+        列宽：<input type="number" name="" id="col_width" value="48" onchange="drawRect();">
+        列间矩：<input type="number" name="" id="col_margin" value="80" onchange="drawRect();">
+        离左边：<input type="number" name="" id="col_left" value="10" onchange="drawRect();">
+        
+        <br>
+        行数：<input type="number" name="" id="nrow" value="3" onchange="drawRect();">
+        行高：<input type="number" name="" id="row_height" value="48" onchange="drawRect();">
+        行间矩：<input type="number" name="" id="row_margin" value="0" onchange="drawRect();">
+        离顶部：<input type="number" name="" id="row_top" value="10" onchange="drawRect();">
+    </div>
+    
+    <div id="panel1">
+    自定义列：<input type="text" id="col_list" placeholder="100~200, 400~500..."  value="24~280,450~820" >
     <br>
-    行数：<input type="number" name="" id="nrow" value="3" onchange="drawRect();">
-    行高：<input type="number" name="" id="row_height" value="48" onchange="drawRect();">
-    行间矩：<input type="number" name="" id="row_margin" value="0" onchange="drawRect();">
-    离顶部：<input type="number" name="" id="row_top" value="10" onchange="drawRect();">
+    自定义行：<input type="text" id="row_list" placeholder="100~200, 400~500..." value="100~200,400~500" >
+    <input type="button" value="估计行位置" onclick="guessRow();">
+    </div>
 
-    <br>
-    <input type="button" value="绘框" onclick="drawRect();" style="display:none">
-    <input type="button" value="OCR" onclick="getTableText();">
+    <input type="button" value="绘框" onclick="drawRect();">
+    <input type="button" value="OCR" onclick="ocrTable();">
     <button value="显示隐藏" onclick ="showhidePopWindow();" >显/隐结果</button>
  
 
@@ -105,6 +143,74 @@
     <canvas id = 'canvas' width="1400px" height="800px"></canvas>
 
     <script>
+        window.onload = function(){
+            changePanel();
+            let row_list = document.getElementById('row_list');
+            let col_list = document.getElementById('col_list');
+            row_list.onkeyup = checkEnter;
+            col_list.onkeyup = checkEnter;
+        }
+        function checkEnter(e){
+            if (e.keyCode==13){
+                drawRect();
+            }
+        }
+
+        function txt2pos(txt){
+            let out = []
+            let txt_list = txt.split(",");
+            for (let i =0 ;i < txt_list.length; i++){
+                x = txt_list[i].split("~");
+                out.push([parseInt(x[0]),parseInt(x[1])]);
+            }
+            return out;
+        }
+        function pos2txt(pos){
+            return pos.map(x=>x.join("~")).join(",");
+        }
+
+        function drawRect(){
+            if (ocrType==0){
+                drawRegularRect();
+            }else{
+                drawCustomeRect();
+            }
+        }
+        function ocrTable(){
+            if (ocrType==0){
+                ocrTableText();
+            }else{
+                ocrTableText2();
+            }
+
+        }
+        function drawCustomeRect(){
+            let srow = document.getElementById('row_list').value;
+            let scol = document.getElementById('col_list').value;
+            let m_row = txt2pos(srow);
+            let m_col = txt2pos(scol);
+            
+            let canvas = document.getElementById('canvas');
+            let ctx = canvas.getContext("2d");
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1;
+            //ctx.strokeRect(10,10,50,50);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            if (myImageName != "" ){
+                ctx.drawImage(myImage,0,0);
+            }
+            for(let i = 0; i < m_row.length;i++ ){
+                for(let j =0; j< m_col.length; j++ ){
+                    ctx.strokeRect(m_col[j][0],m_row[i][0],
+                                    m_col[j][1]- m_col[j][0],
+                                    m_row[i][1]-m_row[i][0]);
+                }
+            }
+
+        }
+
+
+
         let mywindow = document.getElementById('popwindow');
         let mywindowheader = document.getElementById('header');
         mywindowheader.addEventListener('mousedown',startDragging);
@@ -125,8 +231,35 @@
             document.removeEventListener('mouseup',stopDragging);
         }
 
+        
 
 
+        function guessRow(){
+            if (myImageData ==""){
+                window.alert("请先选择图片文件");
+                return;
+            }
+
+            let param = "test"
+
+            fetch('http://localhost:5000/api/guessrow',{
+                method:'POST',
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"param":param,"imgdata":myImageData,"imgname":myImageName})
+            })
+            .then(response => response.json())
+            .then(result =>{
+                console.log(result);
+                x = document.getElementById('row_list');
+                x.value = pos2txt(result['guess']);
+            })
+            .catch(error=>{
+                console.error(error);
+            });
+
+        }
 
         function showhidePopWindow(){
             let w = document.getElementById("popwindow");
@@ -141,6 +274,7 @@
         var myImage = new Image();
         var myImageData = "";
         var myImageName = "";
+        var ocrType = 0;
 
         function selectImage(file){
             if(!file.files || ! file.files[0]){
@@ -151,7 +285,7 @@
             let reader = new FileReader();
             reader.onload = function(evt){
                 myImageData = reader.result;
-                console.log(myImageData);
+                //console.log(myImageData);
                 myImageData = myImageData.replace(/^data:image.*base64,/, "");
                 myImage.src = evt.target.result;
                 myImage.onload = function(evt){
@@ -169,7 +303,7 @@
 
         }
         
-        function drawRect(){
+        function drawRegularRect(){
             nrow = parseInt(document.getElementById('nrow').value);
             row_height = parseInt(document.getElementById('row_height').value);
             row_margin = parseInt(document.getElementById('row_margin').value);
@@ -179,9 +313,6 @@
             col_width = parseInt(document.getElementById('col_width').value);
             col_margin = parseInt(document.getElementById('col_margin').value);
             col_left = parseInt(document.getElementById('col_left').value);
-
-
-            //console.log({nrow,row_height,row_margin,ncol,col_width,col_margin});
 
 
             let canvas = document.getElementById('canvas');
@@ -203,7 +334,7 @@
         }
 
 
-        function getTableText(){
+        function ocrTableText(){
             if (myImageData ==""){
                 window.alert("请先选择图片文件");
                 return;
@@ -253,32 +384,67 @@
                 console.error(error);
             });
         }
-
-    function showOcrContent(content){
-        let ncol = parseInt(content['ncol']);
-        let nrow = parseInt(content['nrow']);
-        let result = content['result'];
-        console.log(result);
-        let html= "";
-        for(let i = 0 ;i<nrow; i++){
-            html += "<tr>"
-            for(let j=0;j<ncol; j++){
-                html += "<td>" + result[j + i*ncol] +"</td>"
+    
+        function ocrTableText2(){
+            if (myImageData ==""){
+                window.alert("请先选择图片文件");
+                return;
             }
-            html += "</tr>"
+            row_pos = txt2pos(document.getElementById('row_list').value);
+            col_pos = txt2pos(document.getElementById('col_list').value);
+
+            let x_content_type = document.getElementsByName('content_type');
+            let lang = '';
+            for (let i =0; i <x_content_type.length; i++ ){            
+                if (x_content_type[i].checked){
+                    lang = x_content_type[i].value;
+                    break;
+                }
+            }
+            fetch('http://localhost:5000/api/readtable2',{
+                method:'POST',
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"lang":lang,"imgdata":myImageData,"imgname":myImageName,
+                                        "row_pos":row_pos, "col_pos":col_pos })
+            })
+            .then(response => response.json())
+            .then(result =>{
+                //console.log(result);
+                showOcrContent(result);
+
+            })
+            .catch(error=>{
+                console.error(error);
+            });
+
         }
-        console.log(html);
-        showResultWindow(html);
 
+        function showOcrContent(content){
+            let ncol = parseInt(content['ncol']);
+            let nrow = parseInt(content['nrow']);
+            let result = content['result'];
+            //console.log(result);
+            let html= "";
+            for(let i = 0 ;i<nrow; i++){
+                html += "<tr>"
+                for(let j=0;j<ncol; j++){
+                    html += "<td>" + result[j + i*ncol] +"</td>"
+                }
+                html += "</tr>"
+            }
+            //console.log(html);
+            showResultWindow(html);
+        }
 
-    }
-    function showResultWindow(html){
-        let w = document.getElementById('popwindow');
-        let tb = document.getElementById('output_table');
-        tb.innerHTML = html;
-        w.style.display='block';
+        function showResultWindow(html){
+            let w = document.getElementById('popwindow');
+            let tb = document.getElementById('output_table');
+            tb.innerHTML = html;
+            w.style.display='block';
 
-    }
+        }
 
 
 
