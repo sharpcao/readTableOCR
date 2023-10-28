@@ -24,7 +24,20 @@ def api_guessrow():
             image_file.write(img_data)
 
     return jsonify({"guess":guessRowPosition(image_filename)})
-     
+
+@app.post('/api/guesscol')
+def api_guesscol():
+    img_base64 = request.json.get('imgdata')
+    img_data = base64.b64decode(img_base64)
+    img_name = request.json.get('imgname')
+    print(img_name)
+    image_folder = 'images'
+    os.makedirs(image_folder, exist_ok=True)
+    image_filename = os.path.join(image_folder, img_name)
+    with open(image_filename, 'wb') as image_file:
+            image_file.write(img_data)
+
+    return jsonify({"guess":guessColPosition(image_filename)})   
 
 @app.post('/api/readtable')
 def api_ocrtable():
@@ -75,10 +88,10 @@ def saveBase64Image(img_base64,img_name,image_folder='images'):
     return image_filename
      
 
-def guessRowPosition(img_src, content_bins= [-1,2,200,260],conent_labels =['whiteline','content','blackline'],size_threshold=10,d=5):
+def guessAxisPosition(img_src, axis,content_bins,conent_labels ,size_threshold,d):
     img_data = 255 - np.array(Image.open(img_src).convert(mode="L")) # 白为0， 黑为255
-    img_row = img_data.mean(axis=1)
-    type_list = pd.cut(img_row,content_bins,labels=conent_labels).tolist()
+    img_m = img_data.mean(axis=axis)
+    type_list = pd.cut(img_m,content_bins,labels=conent_labels).tolist()
     type_list.append('endline')    
     out = []
     pos = [0]
@@ -92,6 +105,20 @@ def guessRowPosition(img_src, content_bins= [-1,2,200,260],conent_labels =['whit
             
     content = [(item['start']-d,item['end']+d) for item in out if item['type']=='content' and item['size']>size_threshold] 
     return content
+
+def guessRowPosition(img_src):
+    param = {"axis" :1,"content_bins": [-1,3,200,260],
+             "conent_labels" :['whiteline','content','blackline'],
+             "size_threshold":10, "d":3}
+    return guessAxisPosition(img_src,**param)
+
+def guessColPosition(img_src):
+    param = {"axis" :0,"content_bins": [-1,3,200,260],
+             "conent_labels" :['whiteline','content','blackline'],
+             "size_threshold":10, "d":0}
+    return guessAxisPosition(img_src,**param)
+
+
 
 
 def genRect(x,y, width, height, margin_row=0, nrow=1, margin_col=0, ncol=1):

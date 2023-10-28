@@ -125,6 +125,7 @@
     
     <div id="panel1">
     自定义列：<input type="text" id="col_list" placeholder="100~200, 400~500..."  value="24~280,450~820" >
+    <input type="button" value="估计列位置" onclick="guessCol();">
     <br>
     自定义行：<input type="text" id="row_list" placeholder="100~200, 400~500..." value="100~200,400~500" >
     <input type="button" value="估计行位置" onclick="guessRow();">
@@ -260,6 +261,35 @@
             });
 
         }
+
+        function guessCol(){
+            if (myImageData ==""){
+                window.alert("请先选择图片文件");
+                return;
+            }
+
+            let param = "test"
+
+            fetch('http://localhost:5000/api/guesscol',{
+                method:'POST',
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"param":param,"imgdata":myImageData,"imgname":myImageName})
+            })
+            .then(response => response.json())
+            .then(result =>{
+                console.log(result);
+                x = document.getElementById('col_list');
+                x.value = pos2txt(result['guess']);
+            })
+            .catch(error=>{
+                console.error(error);
+            });
+
+        }
+
+
 
         function showhidePopWindow(){
             let w = document.getElementById("popwindow");
