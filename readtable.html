@@ -83,8 +83,9 @@
 
     <input type="file" name="" id="" onchange="selectImage(this);">
     <select name="" id="selPanel" onchange="changePanel();">
-        <option value="0">规则表格</option>
-        <option value="1">不规则表格</option>
+        <option value="1">自定义表格</option>
+        <option value="0">等宽高表格</option>
+       
     </select>
     <script>
         function changePanel(){
@@ -268,14 +269,20 @@
                 return;
             }
 
-            let param = "test"
+            let row_list = document.getElementById('row_list');
+            let row_pos = [];
+            if (row_list.value.length>0){
+                row_pos = txt2pos(row_list.value);
+            }
+
+            //let param = "test"
 
             fetch('http://localhost:5000/api/guesscol',{
                 method:'POST',
                 headers:{
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({"param":param,"imgdata":myImageData,"imgname":myImageName})
+                body: JSON.stringify({"row_pos":row_pos,"imgdata":myImageData,"imgname":myImageName})
             })
             .then(response => response.json())
             .then(result =>{
