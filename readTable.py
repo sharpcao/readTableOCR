@@ -91,14 +91,26 @@ def saveBase64Image(img_base64,img_name,image_folder='images'):
      
 
 def guessAxisPosition(img_src, axis,content_breaks,content_labels ,merge_delta,size_threshold,d,row_index=[]):
-    img_data = 255 - np.array(Image.open(img_src).convert(mode="L")) # 白为0， 黑为255
-    if len(row_index) > 0 :
-        img_m = img_data[row_index,:].mean(axis=axis)
+    img_data = 255 - np.array(Image.open(img_src).convert(mode="L"),dtype='int') # 白为0， 黑为255
+    if axis == 0:   
+        if len(row_index) > 0 :
+            
+            img_d = np.zeros(img_data.shape[1])
+            for index in row_index:
+                tmp = img_data[index,:]
+                img_d += (np.abs(tmp[1:,:]-tmp[0:-1,:])>10).sum(axis=0)
+        else:
+            img_d = (np.abs(img_data[1:,:]-img_data[0:-1,:])>10).sum(axis=0)
+
     else:
-        img_m = img_data.mean(axis=axis)
-    type_list = pd.cut(img_m,content_breaks,labels=content_labels).tolist()
+        img_d = (np.abs(img_data[:,1:] - img_data[:,0:-1]) > 10).sum(axis=1)
+    np.set_printoptions(threshold=1000)
+    #print(img_d[543:555],axis)
+    type_list = pd.cut(img_d,content_breaks,labels=content_labels).tolist()
+    #print(type_list[543:555])
     type_list.append('endline')
 
+   
     def getContentType(type_list):    
         out = []
         pos = [0]
@@ -131,6 +143,8 @@ def guessAxisPosition(img_src, axis,content_breaks,content_labels ,merge_delta,s
             elif node_list[i]['type']=='whiteline':
                 continue
             else:
+                # print("node_list:" ,node_list[i])
+                # print(last_node)
                 if last_node is not None:
                     out.append(last_node)
                     last_node = None
@@ -139,23 +153,21 @@ def guessAxisPosition(img_src, axis,content_breaks,content_labels ,merge_delta,s
         if last_node is not None :out.append(last_node)
         return out
     
- 
-    out = mergeContent(out,merge_delta)
-
-    print(out)
+    #print(out)
+    out = mergeContent(out,merge_delta)   
     content = [(item['start']-d,item['end']+d) for item in out if item['type']=='content' and item['size']>size_threshold] 
     return content
 
 def guessRowPosition(img_src):
-    param = {"axis" :1,"content_breaks": [-1,3,200,260],
-             "content_labels" :['whiteline','content','blackline'],
-             "size_threshold":10, "d":2,"merge_delta":0}
+    param = {"axis" :1,"content_breaks": [-1,1,5,99999],
+             "content_labels" :['blackline','whiteline','content'],
+             "size_threshold":10, "d":0,"merge_delta":0}
     return guessAxisPosition(img_src,**param)
 
 def guessColPosition(img_src,row_pos=[]):
-    param = {"axis" :0,"content_breaks": [-1,5,200,260],
-             "content_labels" :['whiteline','content','blackline'],
-             "size_threshold":20, "d":2, "merge_delta":10}
+    param = {"axis" :0,"content_breaks": [-1,-0.1,1,99999],
+             "content_labels" :['blackline','whiteline','content'],
+             "size_threshold":20, "d":0, "merge_delta":10}
     row_index = [] if len(row_pos)==0 else genIndexbyPos(row_pos) 
     return guessAxisPosition(img_src, row_index=row_index, **param)
 
@@ -163,8 +175,9 @@ def genIndexbyPos(pos):
     out = []
     tmp = [list(range(a,b)) for a,b in pos]
     for i in tmp:
-        out += i
-    return out
+        #out += i
+        out.append(tmp)
+    return tmp
 
 
 
@@ -188,4 +201,4 @@ def readText(img_src, rect_list, config = '--psm 6 -l chi_sim'):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",debug=True)
+    app.run(host="0.0.0.0",debug=True,port=5123)
