@@ -49,12 +49,7 @@ def api_ocrtable():
     img_filename = saveBase64Image(img_base64,img_name)
 
     param = request.json.get('param')
-    lang = request.json.get('lang')
-    if (lang == 'digit'):
-        config = '--psm 6 digits'
-    else:
-        config =  '--psm 6 -l chi_sim'
-         
+    config = getLangConfig()       
     rect_list = genRect(**param)
     txt = readText(img_filename, rect_list,config)
 
@@ -64,15 +59,8 @@ def api_ocrtable():
 def api_ocrtable2():                                #{imgdata,imgname, lang, row_pos, col_pos}
     img_base64 = request.json.get('imgdata')
     img_name = request.json.get('imgname')
-    img_filename = saveBase64Image(img_base64,img_name)
-
-    #param = request.json.get('param')
-    lang = request.json.get('lang')
-    if (lang == 'digit'):
-        config = '--psm 6 digits'
-    else:
-        config =  '--psm 6 -l chi_sim'
-
+    img_filename = saveBase64Image(img_base64,img_name) 
+    config = getLangConfig()
     row_pos = request.json.get('row_pos')
     col_pos = request.json.get('col_pos')
     nrow, ncol = len(row_pos),len(col_pos)
@@ -80,7 +68,22 @@ def api_ocrtable2():                                #{imgdata,imgname, lang, row
     txt = readText(img_filename, rect_list,config) 
     return jsonify( {"result":txt,"nrow":nrow,"ncol":ncol})
 
+def getLangConfig():
+    config = '--psm 6 '
+    lang = request.json.get('lang')
+    if (lang == 'digits'):
+        config += 'digits'
+    elif(lang == 'eng'):
+        config += '-l eng'
+    elif(lang == 'chi_tra'):
+        config += '-l chi_tra'
+    else:
+        config += '-l chi_sim'
 
+    return config
+
+
+    
 def saveBase64Image(img_base64,img_name,image_folder='images'):
     img_data = base64.b64decode(img_base64)
     os.makedirs(image_folder, exist_ok=True)
@@ -172,12 +175,8 @@ def guessColPosition(img_src,row_pos=[]):
     return guessAxisPosition(img_src, row_index=row_index, **param)
 
 def genIndexbyPos(pos):
-    out = []
-    tmp = [list(range(a,b)) for a,b in pos]
-    for i in tmp:
-        #out += i
-        out.append(tmp)
-    return tmp
+    return [list(range(a,b)) for a,b in pos]
+
 
 
 
@@ -194,11 +193,12 @@ def readText(img_src, rect_list, config = '--psm 6 -l chi_sim'):
     out = []
     for rect in rect_list:
         o = tes.image_to_string(img.crop(rect),config=config).strip()
-        out.append(o.replace(' ',''))
+        #o = o.replace(' ','')
+        out.append(o)
     
     return out
 
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",debug=True,port=5123)
+    app.run(host="0.0.0.0",debug=False,port=5123)

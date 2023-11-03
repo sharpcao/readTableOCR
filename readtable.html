@@ -123,8 +123,10 @@
         }
     </script>
 
-    <input type="radio" name="content_type" id="" value="chi_sim" checked>中英文
-    <input type="radio" name="content_type" id="" value="digit">数字
+    <input type="radio" name="content_type" id="" value="chi_sim" checked>中文
+    <input type="radio" name="content_type" id="" value="chi_tra" >繁体
+    <input type="radio" name="content_type" id="" value="eng" >英文
+    <input type="radio" name="content_type" id="" value="digits">数字
 
 
     <br>
@@ -160,12 +162,14 @@
             let row = document.getElementById('row_list');
             if (checkInput(row.value)){
                 row.value = enlarge(d, row.value);
+                drawRect();
             }
         }
         function enlargeCol(d) {
             let col = document.getElementById('col_list');
             if (checkInput(col.value)){
                 col.value = enlarge(d, col.value);
+                drawRect();
             }
         }
         function enlarge(d, txt) {
@@ -179,6 +183,7 @@
             if (check) {
                 let pos = txt2pos(txt);
                 for (let i = 0; i < pos.length; i++) {
+
                     if (pos[i][0] >= pos[i][1]) {
                         window.alert(`起止不对，${pos[i][0]} >= ${pos[i][1]}`);
                         return false;
@@ -196,9 +201,7 @@
     <input type="button" value="绘框" onclick="drawRect();">
     <input type="button" value="OCR读取,点击后请耐心等待..." onclick="ocrTable();">
     <button value="显示隐藏" onclick="showhidePopWindow();">显/隐结果</button>
-
-
-    <br>
+    <br><br>
 
 
 
@@ -248,19 +251,17 @@
 
         }
         function drawCustomeRect() {
-            let srow = document.getElementById('row_list').value;
-            let scol = document.getElementById('col_list').value;
-            if (checkInput(srow) == false | checkInput(scol) == false) {
-                return false;
-            }
-            let m_row = txt2pos(srow);
-            let m_col = txt2pos(scol);
-
             let canvas = document.getElementById('canvas');
             let ctx = canvas.getContext("2d");
             ctx.strokeStyle = "red";
             ctx.lineWidth = 1;
-            //ctx.strokeRect(10,10,50,50);
+
+            let srow = document.getElementById('row_list').value;
+            let scol = document.getElementById('col_list').value;
+
+            let m_row = checkInput(srow) ? txt2pos(srow) : [[0,canvas.height]];
+            let m_col = checkInput(scol) ? txt2pos(scol) : [[0,canvas.width]];
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (myImageName != "") {
                 ctx.drawImage(myImage, 0, 0);
@@ -320,6 +321,7 @@
                     console.log(result);
                     x = document.getElementById('row_list');
                     x.value = pos2txt(result['guess']);
+                    drawRect();
                 })
                 .catch(error => {
                     console.error(error);
@@ -355,6 +357,7 @@
                     console.log(result);
                     x = document.getElementById('col_list');
                     x.value = pos2txt(result['guess']);
+                    drawRect();
                 })
                 .catch(error => {
                     console.error(error);
@@ -379,9 +382,10 @@
         var myImageName = "";
         var ocrType = 0;
 
-        var myApiURL = "http://localhost:5123";
+        //var myApiURL = "http://localhost:5123";
+        var myApiURL = "http://124.221.89.226:5123";
         //var myApiURL = "http://204.44.71.198:5123";
-        //var myApiURL = "http://124.221.89.226:5123";
+        
 
         function selectImage(file) {
             if (!file.files || !file.files[0]) {
@@ -402,6 +406,10 @@
                     canvas.height = myImage.height;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(myImage, 0, 0);
+                    document.getElementById('row_list').value = pos2txt([[0,canvas.height]]);
+                    document.getElementById('col_list').value = pos2txt([[0,canvas.width]]);
+                    drawCustomeRect();
+
                 }
 
             }
